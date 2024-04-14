@@ -1,8 +1,10 @@
 package com.example.news.di.local
 
+import com.example.news.di.database.entity.NewsEntity
 import com.example.news.di.network.NewsDataContent
 
-class News(
+data class News(
+    val articalId: String,
     val title: String,
     val author: List<String>?,
     val description: String?,
@@ -10,9 +12,12 @@ class News(
     val pubDate: String,
     val imageUrl: String?,
     val sourceIcon: String?,
-    val sourse: String
+    val source: String,
+    var isFavorite: Boolean = false
 ) {
+
     constructor(newsDataContent: NewsDataContent) : this(
+        articalId = newsDataContent.articleId,
         title = newsDataContent.title,
         author = newsDataContent.creator,
         description = newsDataContent.description,
@@ -20,6 +25,19 @@ class News(
         pubDate = newsDataContent.pubDate,
         imageUrl = newsDataContent.imageUrl,
         sourceIcon = newsDataContent.sourceIcon,
-        sourse = "News Data IO"
+        source = "News Data IO"
+    )
+
+    constructor(newsEntity: NewsEntity, creators: List<String>?) : this(
+        articalId = newsEntity.id,
+        title = newsEntity.title,
+        author = creators,
+        description = newsEntity.description,
+        content = newsEntity.content,
+        pubDate = newsEntity.pubDate,
+        imageUrl = newsEntity.imageUrl,
+        sourceIcon = newsEntity.sourceIcon,
+        source = newsEntity.source,
+        isFavorite = newsEntity.isFavorite == 1
     )
 }

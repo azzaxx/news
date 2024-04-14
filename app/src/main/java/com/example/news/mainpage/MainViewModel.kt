@@ -4,17 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.news.DataError
 import com.example.news.Result
+import com.example.news.di.database.repo.DataBaseRepository
 import com.example.news.di.local.News
 import com.example.news.di.network.repo.NetworkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-data class MainState(
+data class MainUIState(
     val isLoading: Boolean = false,
     val data: List<News> = emptyList(),
     val error: String? = null
@@ -22,10 +23,12 @@ data class MainState(
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val networkRepository: NetworkRepository
+    private val networkRepository: NetworkRepository,
+    private val databaseRepository: DataBaseRepository
 ) : ViewModel() {
-    private val _fetchNewsResult: MutableStateFlow<MainState> = MutableStateFlow(MainState())
-    val mainStateFlow: StateFlow<MainState> = _fetchNewsResult.asStateFlow()
+    private val _databaseNews: Flow<List<News>> = databaseRepository.getNewsList()
+    private val _fetchNewsResult: MutableStateFlow<MainUIState> = MutableStateFlow(MainUIState())
+    val mainStateFlow: StateFlow<MainUIState> = _fetchNewsResult
 
     init {
         fetchNews()
@@ -37,7 +40,7 @@ class MainViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = networkRepository.fetchNews()) {
                 is Result.ErrorResult -> {
-                    _fetchNewsResult.value = MainState(
+                    _fetchNewsResult.value = MainUIState(
                         isLoading = false,
                         error = when (result.error) {
                             DataError.NetworkError.UNKNOWN -> "Server unknown error"
@@ -48,7 +51,7 @@ class MainViewModel @Inject constructor(
                 }
 
                 is Result.SuccessResult -> {
-                    _fetchNewsResult.value = MainState(
+                    _fetchNewsResult.value = MainUIState(
                         isLoading = false,
                         data = result.data
                     )
@@ -58,6 +61,12 @@ class MainViewModel @Inject constructor(
     }
 
     fun addToFavorite(favorite: News) {
-        TODO("Not yet implemented")
+        viewModelScope.launch {
+            if (favorite.isFavorite) {
+                databaseRepository.addToFavoriteNews(favorite)
+            } else {
+                databaseRepository.removeFromFavoriteNews(favorite)
+            }
+        }
     }
 }

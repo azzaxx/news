@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Card
@@ -35,10 +36,8 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,6 +63,7 @@ class NewsPreviewProvider : PreviewParameterProvider<News> {
     override val values: Sequence<News>
         get() = sequenceOf(
             News(
+                articalId = "",
                 title = "This is title",
                 author = listOf("Artur Mike"),
                 content = "The Card composable acts as a Material Design container for your UI." +
@@ -73,7 +73,7 @@ class NewsPreviewProvider : PreviewParameterProvider<News> {
                 imageUrl = "https://developer.android.com/static/develop/ui/compose/images/graphics-CSC-Portrait.png",
                 pubDate = "21.03.2024",
                 sourceIcon = "https://developer.android.com/static/develop/ui/compose/images/graphics-CSC-Portrait.png",
-                sourse = "News Data IO"
+                source = "News Data IO"
             )
         )
 }
@@ -81,7 +81,7 @@ class NewsPreviewProvider : PreviewParameterProvider<News> {
 @Preview(showBackground = true)
 @Composable
 fun NewsCardPreview(@PreviewParameter(NewsPreviewProvider::class) news: News) {
-    NewsCard(news = news,
+    NewsCard(newsItem = news,
         addToFavorite = {
 
         },
@@ -102,6 +102,7 @@ fun MainScreen() {
 
     Box(
         modifier = Modifier
+            .padding(top = 8.dp)
             .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
         NewsList()
@@ -145,7 +146,7 @@ fun NewsList(
     viewModel: MainViewModel = hiltViewModel(),
     listState: LazyListState = rememberLazyListState()
 ) {
-    val news = viewModel.mainStateFlow.collectAsStateWithLifecycle()
+    val newsUiState = viewModel.mainStateFlow.collectAsStateWithLifecycle()
 
     LazyColumn(
         state = listState,
@@ -153,9 +154,9 @@ fun NewsList(
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(news.value.data) { news ->
+        items(newsUiState.value.data) { news ->
             NewsCard(
-                news = news,
+                newsItem = news,
                 addToFavorite = { favorite ->
                     viewModel.addToFavorite(favorite)
                 },
@@ -172,11 +173,13 @@ fun NewsList(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun NewsCard(
-    news: News,
+    newsItem: News,
     addToFavorite: (News) -> Unit,
     openNews: (News) -> Unit,
     shareNews: (News) -> Unit
 ) {
+    val news = remember { mutableStateOf(newsItem) }
+
     Box(
         modifier = Modifier
             .padding(start = 16.dp, end = 16.dp)
@@ -184,15 +187,15 @@ fun NewsCard(
         Card(
             modifier = Modifier
                 .fillMaxWidth(1f)
-                .clickable { openNews(news) },
+                .clickable { openNews(news.value) },
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant,
             )
         ) {
             Column {
-                if (!news.imageUrl.isNullOrEmpty()) {
+                if (!news.value.imageUrl.isNullOrEmpty()) {
                     GlideImage(
-                        model = news.imageUrl,
+                        model = news.value.imageUrl,
                         contentScale = ContentScale.FillBounds,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -208,16 +211,16 @@ fun NewsCard(
                     overflow = TextOverflow.Ellipsis,
                     maxLines = 2,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp),
-                    text = news.title
+                    text = news.value.title
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp)
                 ) {
-                    if (!news.sourceIcon.isNullOrEmpty()) {
+                    if (!news.value.sourceIcon.isNullOrEmpty()) {
                         GlideImage(
-                            model = news.sourceIcon,
+                            model = news.value.sourceIcon,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(30.dp)
@@ -230,17 +233,17 @@ fun NewsCard(
                             contentDescription = "Author image"
                         )
                     }
-                    news.author?.let {
+                    news.value.author?.let {
                         Text(
                             fontSize = 10.sp,
                             modifier = Modifier
-                                .padding(start = if (news.sourceIcon.isNullOrEmpty()) 0.dp else 8.dp),
+                                .padding(start = if (news.value.sourceIcon.isNullOrEmpty()) 0.dp else 8.dp),
                             text = it.toString()
                         )
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                news.description?.let {
+                news.value.description?.let {
                     Text(
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 4,
@@ -256,9 +259,12 @@ fun NewsCard(
                             modifier = Modifier
                                 .padding(start = 16.dp)
                                 .size(24.dp),
-                            onClick = { addToFavorite(news) }) {
+                            onClick = {
+                                news.value = news.value.copy(isFavorite = !news.value.isFavorite)
+                                addToFavorite(news.value)
+                            }) {
                             Icon(
-                                imageVector = Icons.Outlined.FavoriteBorder,
+                                imageVector = if (news.value.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
                                 contentDescription = "Icon favorite"
                             )
                         }
@@ -266,7 +272,7 @@ fun NewsCard(
                             modifier = Modifier
                                 .padding(start = 8.dp)
                                 .size(24.dp),
-                            onClick = { shareNews(news) }) {
+                            onClick = { shareNews(news.value) }) {
                             Icon(
                                 imageVector = Icons.Outlined.Share,
                                 contentDescription = "Icon share"
@@ -296,7 +302,7 @@ fun NewsCard(
                 Text(
                     fontSize = 10.sp,
                     modifier = Modifier.padding(start = 16.dp),
-                    text = news.sourse
+                    text = news.value.source
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
