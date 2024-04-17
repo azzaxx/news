@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Card
@@ -30,18 +31,24 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.PullToRefreshState
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -93,25 +100,69 @@ fun NewsCardPreview(@PreviewParameter(NewsPreviewProvider::class) news: News) {
         })
 }
 
+enum class MainTabs(val icon: ImageVector) {
+    HOME(Icons.Filled.Home),
+    FAVORITE(Icons.Filled.Favorite)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen() {
     val viewModel: MainViewModel = hiltViewModel()
     val pullToRefreshState = rememberPullToRefreshState()
     val isLoading = viewModel.mainStateFlow.collectAsStateWithLifecycle()
+    var selectedTab by remember { mutableStateOf(MainTabs.HOME) }
 
     Box(
         modifier = Modifier
             .padding(top = 8.dp)
             .nestedScroll(pullToRefreshState.nestedScrollConnection)
     ) {
-        NewsList()
+        Column {
+            NewsTabs {
+                selectedTab = it
+            }
+            when (selectedTab) {
+                MainTabs.HOME -> NewsTotalList()
+                MainTabs.FAVORITE -> Text(
+                    text = "This is favorite tab"
+                )
+            }
+        }
         PullToRefresh(
             modifier = Modifier.align(Alignment.TopCenter),
             pullToRefreshState = pullToRefreshState,
             isRefreshing = isLoading.value.isLoading,
             onRefresh = { viewModel.fetchNews() }
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NewsTabs(selectedTab: (MainTabs) -> Unit) {
+    var selectedTabState by remember { mutableIntStateOf(0) }
+    val tabTitles = MainTabs.entries.map { it.name }
+
+    PrimaryTabRow(selectedTabIndex = selectedTabState) {
+        tabTitles.forEachIndexed { index, title ->
+            Tab(
+                selected = selectedTabState == index,
+                onClick = {
+                    selectedTabState = index
+                    selectedTab(MainTabs.entries[index])
+                },
+                text = { Text(text = title, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+                icon = {
+                    Icon(
+                        imageVector = MainTabs.entries[index].icon,
+                        contentDescription = "Tab Icon"
+                    )
+                },
+                selectedContentColor = Color.Blue,
+                unselectedContentColor = Color.Gray
+            )
+        }
     }
 }
 
@@ -142,7 +193,7 @@ fun PullToRefresh(
 }
 
 @Composable
-fun NewsList(
+fun NewsTotalList(
     viewModel: MainViewModel = hiltViewModel(),
     listState: LazyListState = rememberLazyListState()
 ) {
@@ -182,7 +233,7 @@ fun NewsCard(
 
     Box(
         modifier = Modifier
-            .padding(start = 16.dp, end = 16.dp)
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
     ) {
         Card(
             modifier = Modifier
@@ -233,12 +284,12 @@ fun NewsCard(
                             contentDescription = "Author image"
                         )
                     }
-                    news.value.author?.let {
+                    if (!news.value.author.isNullOrEmpty()) {
                         Text(
                             fontSize = 10.sp,
                             modifier = Modifier
                                 .padding(start = if (news.value.sourceIcon.isNullOrEmpty()) 0.dp else 8.dp),
-                            text = it.toString()
+                            text = news.value.author.toString()
                         )
                     }
                 }

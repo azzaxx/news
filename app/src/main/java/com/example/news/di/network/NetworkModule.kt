@@ -1,5 +1,6 @@
 package com.example.news.di.network
 
+import com.example.news.di.database.repo.DataBaseRepository
 import com.example.news.di.network.repo.NetworkRepository
 import com.example.news.di.network.repo.NetworkRepositoryImpl
 import dagger.Module
@@ -34,7 +35,10 @@ class NetworkModule {
     }
 
     @Provides
-    fun provideNetworkRepository(newsDataService: NewsDataService): NetworkRepository {
-        return NetworkRepositoryImpl(newsDataService)
+    fun provideNetworkRepository(
+        newsDataService: NewsDataService,
+        dataBaseRepository: DataBaseRepository
+    ): NetworkRepository {
+        return NetworkRepositoryImpl(newsDataService, dataBaseRepository)
     }
 }

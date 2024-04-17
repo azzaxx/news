@@ -12,20 +12,29 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface NewsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun addToFavoriteNews(newsEntity: NewsEntity)
+    suspend fun addToNews(newsEntity: List<NewsEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addToFavoriteAuthor(authors: List<AuthorEntity>)
 
     @Query("SELECT * FROM news_table")
-    fun getNewsList(): Flow<List<NewsEntity>>
+    fun getNewsListFlow(): Flow<List<NewsEntity>>
+
+    @Query("SELECT * FROM news_table ORDER by pub_date DESC")
+    suspend fun getNewsList(): List<NewsEntity>
+
+    @Query("SELECT * FROM news_table WHERE is_favorite == 0")
+    suspend fun getCashedNews(): List<NewsEntity>
 
     @Query("SELECT * FROM author_table WHERE article_id =:articleId")
-    fun getNewsAuthor(articleId: String): List<AuthorEntity>?
+    suspend fun getNewsAuthor(articleId: String): List<AuthorEntity>?
 
     @Delete
-    suspend fun removeFavoriteNews(favorite: NewsEntity)
+    suspend fun removeNews(news: List<NewsEntity>)
 
     @Delete
-    suspend fun removeFavoriteAuthors(authors: List<AuthorEntity>)
+    suspend fun removeAuthors(authors: List<AuthorEntity>)
+
+    @Query("DELETE FROM author_table WHERE article_id =:articleId")
+    suspend fun removeAuthorsByArticleId(articleId: String)
 }
