@@ -37,4 +37,7 @@ interface NewsDao {
 
     @Query("DELETE FROM author_table WHERE article_id =:articleId")
     suspend fun removeAuthorsByArticleId(articleId: String)
+
+    @Query("SELECT * FROM news_table WHERE id =:articleId")
+    suspend fun getNewsById(articleId: String) : NewsEntity?
 }

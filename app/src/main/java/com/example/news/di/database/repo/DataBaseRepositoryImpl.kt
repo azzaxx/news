@@ -1,12 +1,11 @@
 package com.example.news.di.database.repo
 
-import android.util.Log
+import com.example.news.DataError
+import com.example.news.Result
 import com.example.news.di.database.NewsDao
 import com.example.news.di.database.entity.AuthorEntity
 import com.example.news.di.database.entity.NewsEntity
 import com.example.news.di.local.News
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 
 class DataBaseRepositoryImpl(private val newsDao: NewsDao) : DataBaseRepository {
 
@@ -36,6 +35,13 @@ class DataBaseRepositoryImpl(private val newsDao: NewsDao) : DataBaseRepository 
         val oldNews = newsDao.getCashedNews()
         oldNews.forEach { newsDao.removeAuthorsByArticleId(it.id) }
         newsDao.removeNews(oldNews)
+    }
+
+    override suspend fun getNewsById(newsId: String): Result<News, DataError.DatabaseError> {
+        val newsEntity = newsDao.getNewsById(newsId)
+            ?: return Result.ErrorResult(DataError.DatabaseError.NOT_FOUND)
+        val authors = newsDao.getNewsAuthor(newsEntity.id)?.map { it.authorName }
+        return Result.SuccessResult(News(newsEntity, authors))
     }
 
     override suspend fun getNewsList(): List<News> {

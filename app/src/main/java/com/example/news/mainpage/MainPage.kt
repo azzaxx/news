@@ -107,7 +107,7 @@ enum class MainTabs(val icon: ImageVector) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(navigateToDetail: (News) -> Unit) {
     val viewModel: MainViewModel = hiltViewModel()
     val pullToRefreshState = rememberPullToRefreshState()
     val isLoading = viewModel.mainStateFlow.collectAsStateWithLifecycle()
@@ -123,7 +123,7 @@ fun MainScreen() {
                 selectedTab = it
             }
             when (selectedTab) {
-                MainTabs.HOME -> NewsTotalList()
+                MainTabs.HOME -> NewsTotalList(navigateToDetail)
                 MainTabs.FAVORITE -> Text(
                     text = "This is favorite tab"
                 )
@@ -194,6 +194,7 @@ fun PullToRefresh(
 
 @Composable
 fun NewsTotalList(
+    navigateToDetail: (News) -> Unit,
     viewModel: MainViewModel = hiltViewModel(),
     listState: LazyListState = rememberLazyListState()
 ) {
@@ -211,9 +212,7 @@ fun NewsTotalList(
                 addToFavorite = { favorite ->
                     viewModel.addToFavorite(favorite)
                 },
-                openNews = { newsToOpen ->
-                    //TODO
-                },
+                openNews = navigateToDetail,
                 shareNews = { share ->
 
                 })
