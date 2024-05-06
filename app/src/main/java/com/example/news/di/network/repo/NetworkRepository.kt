@@ -5,5 +5,5 @@ import com.example.news.Result
 import com.example.news.di.local.News
 
 interface NetworkRepository {
-    suspend fun fetchNews(): Result<List<News>, DataError.NetworkError>
+    suspend fun fetchNews(page: String? = null): Result<List<News>, DataError.NetworkError>
 }

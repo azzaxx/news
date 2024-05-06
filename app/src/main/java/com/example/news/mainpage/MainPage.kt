@@ -80,7 +80,8 @@ class NewsPreviewProvider : PreviewParameterProvider<News> {
                 imageUrl = "https://developer.android.com/static/develop/ui/compose/images/graphics-CSC-Portrait.png",
                 pubDate = "21.03.2024",
                 sourceIcon = "https://developer.android.com/static/develop/ui/compose/images/graphics-CSC-Portrait.png",
-                source = "News Data IO"
+                source = "News Data IO",
+                nextPage = null
             )
         )
 }

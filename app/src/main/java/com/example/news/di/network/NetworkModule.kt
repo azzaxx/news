@@ -36,9 +36,8 @@ class NetworkModule {
 
     @Provides
     fun provideNetworkRepository(
-        newsDataService: NewsDataService,
-        dataBaseRepository: DataBaseRepository
+        newsDataService: NewsDataService
     ): NetworkRepository {
-        return NetworkRepositoryImpl(newsDataService, dataBaseRepository)
+        return NetworkRepositoryImpl(newsDataService)
     }
 }

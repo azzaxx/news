@@ -13,10 +13,11 @@ data class News(
     val imageUrl: String?,
     val sourceIcon: String?,
     val source: String,
-    var isFavorite: Boolean = false
+    var isFavorite: Boolean = false,
+    val nextPage: String?
 ) {
 
-    constructor(newsDataContent: NewsDataContent) : this(
+    constructor(newsDataContent: NewsDataContent, nextPage: String?) : this(
         articalId = newsDataContent.articleId,
         title = newsDataContent.title,
         author = newsDataContent.creator,
@@ -25,7 +26,8 @@ data class News(
         pubDate = newsDataContent.pubDate,
         imageUrl = newsDataContent.imageUrl,
         sourceIcon = newsDataContent.sourceIcon,
-        source = "News Data IO"
+        source = "News Data IO",
+        nextPage = nextPage
     )
 
     constructor(newsEntity: NewsEntity, creators: List<String>?) : this(
@@ -38,6 +40,7 @@ data class News(
         imageUrl = newsEntity.imageUrl,
         sourceIcon = newsEntity.sourceIcon,
         source = newsEntity.source,
-        isFavorite = newsEntity.isFavorite == 1
+        isFavorite = newsEntity.isFavorite == 1,
+        nextPage = newsEntity.newsDataNextPage
     )
 }

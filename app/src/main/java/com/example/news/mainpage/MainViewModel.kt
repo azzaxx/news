@@ -2,7 +2,11 @@ package com.example.news.mainpage
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.ExperimentalPagingApi
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import com.example.news.DataError
+import com.example.news.NewsDataRemoteMediator
 import com.example.news.Result
 import com.example.news.di.database.repo.DataBaseRepository
 import com.example.news.di.local.News
@@ -27,6 +31,13 @@ class MainViewModel @Inject constructor(
 ) : ViewModel() {
     private val _fetchNewsResult: MutableStateFlow<MainUIState> = MutableStateFlow(MainUIState())
     val mainStateFlow: StateFlow<MainUIState> = _fetchNewsResult
+
+//    @OptIn(ExperimentalPagingApi::class)
+//    private val pager = Pager(
+//        config = PagingConfig(pageSize = 10),
+//        remoteMediator = NewsDataRemoteMediator(dataBaseRepository, networkService),
+//        pagingSourceFactory = { dataBaseRepository.pagingSource() }
+//    ).flow
 
     init {
         fetchNews()

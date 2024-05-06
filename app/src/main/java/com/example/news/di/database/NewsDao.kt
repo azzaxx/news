@@ -1,17 +1,22 @@
 package com.example.news.di.database
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Upsert
 import com.example.news.di.database.entity.AuthorEntity
 import com.example.news.di.database.entity.NewsEntity
+import com.example.news.di.database.holders.NewsDataIoHolder
+import com.example.news.di.local.News
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NewsDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun addToNews(newsEntity: List<NewsEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -39,5 +44,12 @@ interface NewsDao {
     suspend fun removeAuthorsByArticleId(articleId: String)
 
     @Query("SELECT * FROM news_table WHERE id =:articleId")
-    suspend fun getNewsById(articleId: String) : NewsEntity?
+    suspend fun getNewsById(articleId: String): NewsEntity?
+
+    @Query("SELECT * FROM news_table")
+    fun pagingSource(): PagingSource<Int, NewsEntity>
+
+    @Transaction
+    @Query("SELECT * FROM news_table")
+    suspend fun getNewsHolder() : List<NewsDataIoHolder>
 }

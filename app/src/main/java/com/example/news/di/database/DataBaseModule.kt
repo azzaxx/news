@@ -22,6 +22,6 @@ class DataBaseModule {
 
     @Provides
     fun provideDatabaseRepository(appRoomDatabase: AppRoomDatabase) : DataBaseRepository {
-        return DataBaseRepositoryImpl(appRoomDatabase.newsDao())
+        return DataBaseRepositoryImpl(appRoomDatabase)
     }
 }

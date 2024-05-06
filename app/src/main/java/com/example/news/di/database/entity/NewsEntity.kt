@@ -25,7 +25,9 @@ data class NewsEntity(
     @ColumnInfo("source")
     val source: String,
     @ColumnInfo("is_favorite")
-    val isFavorite: Int
+    val isFavorite: Int,
+    @ColumnInfo("news_data_next_page")
+    val newsDataNextPage: String? = null
 ) {
     constructor(news: News) : this(
         id = news.articalId,
@@ -36,6 +38,7 @@ data class NewsEntity(
         imageUrl = news.imageUrl,
         sourceIcon = news.sourceIcon,
         source = news.source,
-        isFavorite = if (news.isFavorite) 1 else 0
+        isFavorite = if (news.isFavorite) 1 else 0,
+        newsDataNextPage = news.nextPage
     )
 }

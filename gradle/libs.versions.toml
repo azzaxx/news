@@ -11,15 +11,20 @@ lifecycleRuntimeKtx = "2.7.0"
 activityCompose = "1.8.2"
 composeBom = "2024.04.00"
 loggingInterceptor = "4.12.0"
+pagingRuntimeKtx = "3.2.1"
 retrofit = "2.11.0"
 roomCompiler = "2.6.1"
 lifecycleRuntimeCompose = "2.7.0"
 navigation = "2.7.7"
 hiltAndroidCompiler = "2.51.1"
 hiltNavigationCompose = "1.2.0"
+roomPaging = "2.6.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingRuntimeKtx" }
+androidx-paging-runtime-ktx = { module = "androidx.paging:paging-runtime-ktx", version.ref = "pagingRuntimeKtx" }
+androidx-room-paging = { module = "androidx.room:room-paging", version.ref = "roomPaging" }
 compose = { module = "com.github.bumptech.glide:compose", version.ref = "compose" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }

@@ -53,6 +53,10 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.paging.runtime.ktx)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.room.paging)
+
     implementation(libs.compose)
     implementation(libs.logging.interceptor)
     implementation(libs.retrofit)
