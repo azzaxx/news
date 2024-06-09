@@ -3,6 +3,7 @@ package com.example.news.di.network.repo
 import android.util.Log
 import com.example.news.DataError
 import com.example.news.Result
+import com.example.news.di.database.repo.DataBaseRepository
 import com.example.news.di.local.News
 import com.example.news.di.network.NewsDataService
 import retrofit2.HttpException

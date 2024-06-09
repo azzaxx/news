@@ -10,6 +10,8 @@ import com.example.news.di.database.entity.AuthorEntity
 import com.example.news.di.database.entity.NewsEntity
 import com.example.news.di.database.holders.toNews
 import com.example.news.di.local.News
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase) : DataBaseRepository {
     private val newsDao: NewsDao = appRoomDatabase.newsDao()
@@ -39,8 +41,8 @@ class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase) : Dat
     override suspend fun clearCashedNewsAndAddNew(newsList: List<News>) {
         appRoomDatabase.withTransaction {
             val oldNews = newsDao.getCashedNews()
-            oldNews.forEach { newsDao.removeAuthorsByArticleId(it.id) }
-            newsDao.removeNews(oldNews)
+            oldNews.forEach { newsDao.removeAuthorsByArticleId(it.authors) }
+            newsDao.removeNews(oldNews.map { it.newsEntity })
 
             newsDao.addToNews(newsList.map { NewsEntity(it) })
             newsList.forEach { news ->
@@ -55,19 +57,14 @@ class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase) : Dat
     override suspend fun getNewsById(newsId: String): Result<News, DataError.DatabaseError> {
         val newsEntity = newsDao.getNewsById(newsId)
             ?: return Result.ErrorResult(DataError.DatabaseError.NOT_FOUND)
-        val authors = newsDao.getNewsAuthor(newsEntity.id)?.map { it.authorName }
-        return Result.SuccessResult(News(newsEntity, authors))
+        return Result.SuccessResult(newsEntity.toNews())
     }
 
     override fun pagingSource(): PagingSource<Int, NewsEntity> {
         return newsDao.pagingSource()
     }
 
-    override suspend fun getNewsList(): List<News> {
-        return newsDao.getNewsHolder().map { it.toNews() }
-//        return newsDao.getNewsList().map { newsEntity ->
-//            val creators = newsDao.getNewsAuthor(newsEntity.id)
-//            News(newsEntity, creators?.map { it.authorName })
-//        }
+    override fun getNewsList(): Flow<List<News>> {
+        return newsDao.getNewsHolder().map { it.map { holder -> holder.toNews() } }
     }
 }

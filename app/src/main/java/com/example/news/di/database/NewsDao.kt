@@ -11,7 +11,6 @@ import androidx.room.Upsert
 import com.example.news.di.database.entity.AuthorEntity
 import com.example.news.di.database.entity.NewsEntity
 import com.example.news.di.database.holders.NewsDataIoHolder
-import com.example.news.di.local.News
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -22,17 +21,8 @@ interface NewsDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addToFavoriteAuthor(authors: List<AuthorEntity>)
 
-    @Query("SELECT * FROM news_table")
-    fun getNewsListFlow(): Flow<List<NewsEntity>>
-
-    @Query("SELECT * FROM news_table ORDER by pub_date DESC")
-    suspend fun getNewsList(): List<NewsEntity>
-
     @Query("SELECT * FROM news_table WHERE is_favorite == 0")
-    suspend fun getCashedNews(): List<NewsEntity>
-
-    @Query("SELECT * FROM author_table WHERE article_id =:articleId")
-    suspend fun getNewsAuthor(articleId: String): List<AuthorEntity>?
+    suspend fun getCashedNews(): List<NewsDataIoHolder>
 
     @Delete
     suspend fun removeNews(news: List<NewsEntity>)
@@ -40,16 +30,16 @@ interface NewsDao {
     @Delete
     suspend fun removeAuthors(authors: List<AuthorEntity>)
 
-    @Query("DELETE FROM author_table WHERE article_id =:articleId")
-    suspend fun removeAuthorsByArticleId(articleId: String)
+    @Query("DELETE FROM author_table")
+    suspend fun removeAuthorsByArticleId(authors: List<AuthorEntity>)
 
     @Query("SELECT * FROM news_table WHERE id =:articleId")
-    suspend fun getNewsById(articleId: String): NewsEntity?
+    suspend fun getNewsById(articleId: String): NewsDataIoHolder?
 
     @Query("SELECT * FROM news_table")
     fun pagingSource(): PagingSource<Int, NewsEntity>
 
     @Transaction
     @Query("SELECT * FROM news_table")
-    suspend fun getNewsHolder() : List<NewsDataIoHolder>
+    fun getNewsHolder() : Flow<List<NewsDataIoHolder>>
 }

@@ -1,12 +1,9 @@
 package com.example.news.mainpage
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.ExperimentalPagingApi
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import com.example.news.DataError
-import com.example.news.NewsDataRemoteMediator
 import com.example.news.Result
 import com.example.news.di.database.repo.DataBaseRepository
 import com.example.news.di.local.News
@@ -14,6 +11,7 @@ import com.example.news.di.network.repo.NetworkRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,14 +30,13 @@ class MainViewModel @Inject constructor(
     private val _fetchNewsResult: MutableStateFlow<MainUIState> = MutableStateFlow(MainUIState())
     val mainStateFlow: StateFlow<MainUIState> = _fetchNewsResult
 
-//    @OptIn(ExperimentalPagingApi::class)
-//    private val pager = Pager(
-//        config = PagingConfig(pageSize = 10),
-//        remoteMediator = NewsDataRemoteMediator(dataBaseRepository, networkService),
-//        pagingSourceFactory = { dataBaseRepository.pagingSource() }
-//    ).flow
-
     init {
+        viewModelScope.launch {
+            databaseRepository.getNewsList().collect { news ->
+                Log.d("NEWS APP", "Database news updated ${news.size}")
+                _fetchNewsResult.update { it.copy(data = news, isLoading = false) }
+            }
+        }
         fetchNews()
     }
 
@@ -57,15 +54,13 @@ class MainViewModel @Inject constructor(
                             DataError.NetworkError.REQUEST_TIME_OUT -> "Request time out"
                             DataError.NetworkError.SERVER_DOWN -> "Server not responding"
                         },
-                        data = cashedNews
+                        data = cashedNews.lastOrNull()?: emptyList()
                     )
                 }
 
                 is Result.SuccessResult -> {
-                    _fetchNewsResult.value = MainUIState(
-                        isLoading = false,
-                        data = result.data
-                    )
+                    databaseRepository.clearCashedNewsAndAddNew(result.data)
+                    _fetchNewsResult.update { it.copy(isLoading = false) }
                 }
             }
         }

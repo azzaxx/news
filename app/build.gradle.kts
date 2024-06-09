@@ -67,6 +67,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
 
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.paging.common.android)
     annotationProcessor(libs.androidx.room.compiler)
 
     // To use Kotlin annotation processing tool (kapt)
