@@ -30,14 +30,14 @@ interface NewsDao {
     @Delete
     suspend fun removeAuthors(authors: List<AuthorEntity>)
 
-    @Query("DELETE FROM author_table")
+    @Delete
     suspend fun removeAuthorsByArticleId(authors: List<AuthorEntity>)
 
     @Query("SELECT * FROM news_table WHERE id =:articleId")
     suspend fun getNewsById(articleId: String): NewsDataIoHolder?
 
     @Query("SELECT * FROM news_table")
-    fun pagingSource(): PagingSource<Int, NewsEntity>
+    fun pagingSource(): PagingSource<Int, NewsDataIoHolder>
 
     @Transaction
     @Query("SELECT * FROM news_table")

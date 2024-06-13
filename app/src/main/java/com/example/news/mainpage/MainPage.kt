@@ -27,6 +27,7 @@ import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,13 +61,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.bumptech.glide.integration.compose.placeholder
 import com.example.news.R
 import com.example.news.di.local.News
 
-class NewsPreviewProvider : PreviewParameterProvider<News> {
+class NewsPreviewProvider: PreviewParameterProvider<News> {
     override val values: Sequence<News>
         get() = sequenceOf(
             News(
@@ -199,24 +203,41 @@ fun NewsTotalList(
     viewModel: MainViewModel = hiltViewModel(),
     listState: LazyListState = rememberLazyListState()
 ) {
-    val newsUiState = viewModel.mainStateFlow.collectAsStateWithLifecycle()
+    val newsItemsList = viewModel.newsDataPagerFlow.collectAsLazyPagingItems()
 
-    LazyColumn(
-        state = listState,
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(newsUiState.value.data) { news ->
-            NewsCard(
-                newsItem = news,
-                addToFavorite = { favorite ->
-                    viewModel.addToFavorite(favorite)
-                },
-                openNews = navigateToDetail,
-                shareNews = { share ->
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (newsItemsList.loadState.refresh is LoadState.Loading) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+        } else {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    count = newsItemsList.itemCount,
+                    key = newsItemsList.itemKey { it.articalId },
+                ) { index ->
+                    val news = newsItemsList[index]
+                    if (news != null) {
+                        NewsCard(
+                            newsItem = news,
+                            addToFavorite = { favorite ->
+                                viewModel.addToFavorite(favorite)
+                            },
+                            openNews = navigateToDetail,
+                            shareNews = { share ->
 
-                })
+                            })
+                    }
+                }
+                item {
+                    if (newsItemsList.loadState.append is LoadState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+                    }
+                }
+            }
         }
     }
 }

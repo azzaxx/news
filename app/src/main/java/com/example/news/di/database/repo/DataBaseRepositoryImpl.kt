@@ -8,19 +8,21 @@ import com.example.news.di.database.AppRoomDatabase
 import com.example.news.di.database.NewsDao
 import com.example.news.di.database.entity.AuthorEntity
 import com.example.news.di.database.entity.NewsEntity
+import com.example.news.di.database.holders.NewsDataIoHolder
 import com.example.news.di.database.holders.toNews
 import com.example.news.di.local.News
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
-class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase) : DataBaseRepository {
+class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase): DataBaseRepository {
     private val newsDao: NewsDao = appRoomDatabase.newsDao()
 
     override suspend fun addToNews(newsList: List<News>) {
         newsDao.addToNews(newsList.map { NewsEntity(it) })
         newsList.forEach { news ->
             news.author?.let { authors ->
-                val authorsEntityList = authors.map { AuthorEntity("", it, news.articalId) }
+                val authorsEntityList = authors.map { AuthorEntity(UUID.randomUUID().toString(), it, news.articalId) }
                 newsDao.addToFavoriteAuthor(authorsEntityList)
             }
         }
@@ -38,17 +40,19 @@ class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase) : Dat
         }
     }
 
-    override suspend fun clearCashedNewsAndAddNew(newsList: List<News>) {
+    override suspend fun clearCashedNewsAndAddNew(newsList: List<News>?) {
         appRoomDatabase.withTransaction {
             val oldNews = newsDao.getCashedNews()
             oldNews.forEach { newsDao.removeAuthorsByArticleId(it.authors) }
             newsDao.removeNews(oldNews.map { it.newsEntity })
 
-            newsDao.addToNews(newsList.map { NewsEntity(it) })
-            newsList.forEach { news ->
-                news.author?.let { authors ->
-                    val authorsEntityList = authors.map { AuthorEntity("", it, news.articalId) }
-                    newsDao.addToFavoriteAuthor(authorsEntityList)
+            if (newsList != null) {
+                newsDao.addToNews(newsList.map { NewsEntity(it) })
+                newsList.forEach { news ->
+                    news.author?.let { authors ->
+                        val authorsEntityList = authors.map { AuthorEntity("", it, news.articalId) }
+                        newsDao.addToFavoriteAuthor(authorsEntityList)
+                    }
                 }
             }
         }
@@ -60,7 +64,7 @@ class DataBaseRepositoryImpl(private val appRoomDatabase: AppRoomDatabase) : Dat
         return Result.SuccessResult(newsEntity.toNews())
     }
 
-    override fun pagingSource(): PagingSource<Int, NewsEntity> {
+    override fun pagingSource(): PagingSource<Int, NewsDataIoHolder> {
         return newsDao.pagingSource()
     }
 

@@ -1,16 +1,19 @@
 package com.example.news.mainpage
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.cachedIn
 import com.example.news.DataError
 import com.example.news.Result
 import com.example.news.di.database.repo.DataBaseRepository
 import com.example.news.di.local.News
 import com.example.news.di.network.repo.NetworkRepository
+import com.example.news.di.network.repo.NewsDataPagingRepo
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.lastOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,20 +28,15 @@ data class MainUIState(
 @HiltViewModel
 class MainViewModel @Inject constructor(
     private val networkRepository: NetworkRepository,
-    private val databaseRepository: DataBaseRepository
-) : ViewModel() {
+    private val databaseRepository: DataBaseRepository,
+    newsDataPager: NewsDataPagingRepo
+): ViewModel() {
     private val _fetchNewsResult: MutableStateFlow<MainUIState> = MutableStateFlow(MainUIState())
     val mainStateFlow: StateFlow<MainUIState> = _fetchNewsResult
-
-    init {
-        viewModelScope.launch {
-            databaseRepository.getNewsList().collect { news ->
-                Log.d("NEWS APP", "Database news updated ${news.size}")
-                _fetchNewsResult.update { it.copy(data = news, isLoading = false) }
-            }
-        }
-        fetchNews()
-    }
+    val newsDataPagerFlow = newsDataPager
+        .getNewsDataList()
+        .flowOn(Dispatchers.IO)
+        .cachedIn(viewModelScope)
 
     fun fetchNews() {
         _fetchNewsResult.update { it.copy(isLoading = true) }
@@ -54,7 +52,7 @@ class MainViewModel @Inject constructor(
                             DataError.NetworkError.REQUEST_TIME_OUT -> "Request time out"
                             DataError.NetworkError.SERVER_DOWN -> "Server not responding"
                         },
-                        data = cashedNews.lastOrNull()?: emptyList()
+                        data = cashedNews.lastOrNull() ?: emptyList()
                     )
                 }
 
